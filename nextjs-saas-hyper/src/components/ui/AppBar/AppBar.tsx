@@ -1,7 +1,7 @@
 'use client';
 
-import { styled } from '@mui/material/styles';
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
+import { styled, useTheme as useMuiTheme } from '@mui/material/styles';
+import MuiAppBar from '@mui/material/AppBar';
 import {
   Box,
   Toolbar,
@@ -11,28 +11,26 @@ import {
   MenuItem,
   Menu,
   Tooltip,
+  Avatar,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Notifications as NotificationsIcon,
-  AccountCircle,
   Settings as SettingsIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-  toggleDrawer?: () => void;
-  toggleTheme?: () => void;
-  isDarkMode?: boolean;
-  onCustomizeClick?: () => void;
-}
+import { useTheme } from '@/lib/Providers';
+import { AppBarProps } from './types';
 
 const AppBarStyled = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })<AppBarProps>(({ theme, open }) => ({
+  backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
+  boxShadow: 'none',
+  borderBottom: `1px solid ${theme.palette.divider}`,
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
@@ -51,24 +49,26 @@ const AppBarStyled = styled(MuiAppBar, {
 export function AppBar({ 
   open, 
   toggleDrawer, 
-  toggleTheme, 
-  isDarkMode,
   onCustomizeClick,
   ...props 
 }: AppBarProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  // Remover o hook useNotification e usar um valor estático
+  const notificationCount = 5; // Para demonstração
+  const { toggleTheme, isDarkMode } = useTheme();
+  const theme = useMuiTheme();
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorElUser(event.currentTarget);
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
+    setAnchorElUser(null);
   };
 
   return (
     <AppBarStyled position="fixed" open={open} {...props}>
-      <Toolbar>
+      <Toolbar sx={{ minHeight: '64px !important', px: { sm: 5 } }}>
         <IconButton
           color="inherit"
           aria-label="open drawer"
@@ -85,41 +85,64 @@ export function AppBar({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Tooltip title="Customize Theme">
-            <IconButton color="inherit" onClick={onCustomizeClick}>
+            <IconButton color="inherit" size="small" onClick={onCustomizeClick}>
               <SettingsIcon />
             </IconButton>
           </Tooltip>
 
           <Tooltip title={isDarkMode ? 'Light Mode' : 'Dark Mode'}>
-            <IconButton color="inherit" onClick={toggleTheme}>
+            <IconButton color="inherit" size="small" onClick={toggleTheme}>
               {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Notifications">
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="error">
+            <IconButton color="inherit" size="small">
+              <Badge badgeContent={notificationCount} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Account">
-            <IconButton
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit"
-            >
-              <AccountCircle />
-            </IconButton>
-          </Tooltip>
+          <Box 
+            sx={{ 
+              ml: 2,
+              display: 'flex',
+              alignItems: 'center',
+              borderLeft: `1px solid ${theme.palette.divider}`,
+              pl: 2
+            }}
+          >
+            <Tooltip title="Account">
+              <IconButton
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleMenu}
+                color="inherit"
+                size="small"
+                sx={{ p: 0 }}
+              >
+                <Avatar
+                  src="/images/users/avatar-1.jpg"
+                  alt="User"
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: `0 0 0 2px ${theme.palette.primary.main}`
+                    }
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
         <Menu
           id="menu-appbar"
-          anchorEl={anchorEl}
+          anchorEl={anchorElUser}
           anchorOrigin={{
             vertical: 'bottom',
             horizontal: 'right',
@@ -129,7 +152,7 @@ export function AppBar({
             vertical: 'top',
             horizontal: 'right',
           }}
-          open={Boolean(anchorEl)}
+          open={Boolean(anchorElUser)}
           onClose={handleClose}
         >
           <MenuItem onClick={handleClose}>Profile</MenuItem>

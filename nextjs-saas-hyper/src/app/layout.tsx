@@ -76,8 +76,6 @@ export default function RootLayout({
               <AppBar 
                 open={open} 
                 toggleDrawer={toggleDrawer}
-                toggleTheme={toggleTheme}
-                isDarkMode={isDarkMode}
                 onCustomizeClick={toggleCustomizer}
               />
               <Sidebar open={open} toggleDrawer={toggleDrawer} />
