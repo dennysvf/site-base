@@ -1,6 +1,6 @@
 'use client';
 
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import {
   Card as MuiCard,
   CardProps as MuiCardProps,
@@ -10,6 +10,10 @@ import {
   CardMedia as MuiCardMedia,
   IconButton,
   Typography,
+  Skeleton,
+  Badge,
+  Collapse,
+  Fade,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -18,7 +22,7 @@ import {
 } from '@mui/icons-material';
 
 export interface CardProps extends MuiCardProps {
-  variant?: 'default' | 'bordered' | 'colored';
+  variant?: 'default' | 'bordered' | 'colored' | 'gradient';
   color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   onRefresh?: () => void;
   onClose?: () => void;
@@ -28,14 +32,48 @@ export interface CardProps extends MuiCardProps {
   headerAction?: React.ReactNode;
   footer?: React.ReactNode;
   showControls?: boolean;
+  loading?: boolean;
+  badge?: {
+    content: React.ReactNode;
+    color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
+    variant?: 'standard' | 'dot';
+    overlap?: 'rectangular' | 'circular';
+    anchorOrigin?: {
+      vertical: 'top' | 'bottom';
+      horizontal: 'left' | 'right';
+    };
+  };
+  backgroundImage?: string;
+  expanded?: boolean;
+  elevation?: number;
+  hoverElevation?: number;
+  'aria-label'?: string;
 }
 
 const StyledCard = styled(MuiCard, {
-  shouldForwardProp: (prop) => prop !== 'variant' && prop !== 'color',
-})<{ variant?: string; color?: string }>(({ theme, variant, color }) => ({
+  shouldForwardProp: (prop) => !['variant', 'color', 'backgroundImage', 'hoverElevation'].includes(prop as string),
+})<{
+  variant?: string;
+  color?: string;
+  backgroundImage?: string;
+  hoverElevation?: number;
+}>(({ theme, variant, color, backgroundImage, hoverElevation }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
+  transition: theme.transitions.create(['box-shadow', 'transform', 'background-color'], {
+    duration: theme.transitions.duration.standard,
+  }),
+  position: 'relative',
+  overflow: 'hidden',
+
+  '&:hover': {
+    ...(hoverElevation && {
+      boxShadow: theme.shadows[hoverElevation],
+      transform: 'translateY(-4px)',
+    }),
+  },
+
   ...(variant === 'bordered' && {
     border: `1px solid ${theme.palette.divider}`,
     '& .MuiCardHeader-root': {
@@ -45,6 +83,7 @@ const StyledCard = styled(MuiCard, {
       borderTop: `1px solid ${theme.palette.divider}`,
     },
   }),
+
   ...(variant === 'colored' && color && {
     backgroundColor: theme.palette[color].main,
     color: theme.palette[color].contrastText,
@@ -58,11 +97,47 @@ const StyledCard = styled(MuiCard, {
       color: theme.palette[color].contrastText,
     },
   }),
+
+  ...(variant === 'gradient' && color && {
+    background: `linear-gradient(45deg, ${theme.palette[color].dark} 0%, ${theme.palette[color].main} 100%)`,
+    color: theme.palette[color].contrastText,
+    '& .MuiCardHeader-root': {
+      color: theme.palette[color].contrastText,
+    },
+    '& .MuiCardHeader-subheader': {
+      color: alpha(theme.palette[color].contrastText, 0.7),
+    },
+    '& .MuiIconButton-root': {
+      color: theme.palette[color].contrastText,
+    },
+  }),
+
+  ...(backgroundImage && {
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      opacity: 0.15,
+    },
+  }),
 }));
 
 const CardControls = styled('div')(({ theme }) => ({
   display: 'flex',
   gap: theme.spacing(1),
+}));
+
+const ExpandMoreButton = styled(IconButton, {
+  shouldForwardProp: (prop) => prop !== 'expanded',
+})<{ expanded?: boolean }>(({ expanded }) => ({
+  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+  transition: 'transform 0.3s',
 }));
 
 export function Card({
@@ -76,11 +151,36 @@ export function Card({
   headerAction,
   footer,
   showControls,
+  loading = false,
+  badge,
+  backgroundImage,
+  expanded,
+  elevation = 1,
+  hoverElevation = 4,
   children,
+  'aria-label': ariaLabel,
   ...props
 }: CardProps) {
   const renderHeader = () => {
     if (!title && !subtitle && !headerAction && !showControls) return null;
+
+    if (loading) {
+      return (
+        <MuiCardHeader
+          title={<Skeleton variant="text" width="60%" />}
+          subheader={subtitle && <Skeleton variant="text" width="40%" />}
+          action={
+            showControls && (
+              <CardControls>
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} variant="circular" width={32} height={32} />
+                ))}
+              </CardControls>
+            )
+          }
+        />
+      );
+    }
 
     return (
       <MuiCardHeader
@@ -92,17 +192,30 @@ export function Card({
             {showControls && (
               <CardControls>
                 {onRefresh && (
-                  <IconButton size="small" onClick={onRefresh}>
+                  <IconButton
+                    size="small"
+                    onClick={onRefresh}
+                    aria-label="Refresh"
+                  >
                     <RefreshIcon />
                   </IconButton>
                 )}
                 {onExpand && (
-                  <IconButton size="small" onClick={onExpand}>
+                  <ExpandMoreButton
+                    size="small"
+                    onClick={onExpand}
+                    expanded={expanded}
+                    aria-label={expanded ? 'Collapse' : 'Expand'}
+                  >
                     <ExpandMoreIcon />
-                  </IconButton>
+                  </ExpandMoreButton>
                 )}
                 {onClose && (
-                  <IconButton size="small" onClick={onClose}>
+                  <IconButton
+                    size="small"
+                    onClick={onClose}
+                    aria-label="Close"
+                  >
                     <CloseIcon />
                   </IconButton>
                 )}
@@ -114,13 +227,50 @@ export function Card({
     );
   };
 
-  return (
-    <StyledCard variant={variant} color={color} {...props}>
+  const card = (
+    <StyledCard
+      variant={variant}
+      color={color}
+      backgroundImage={backgroundImage}
+      elevation={elevation}
+      hoverElevation={hoverElevation}
+      aria-label={ariaLabel}
+      {...props}
+    >
       {renderHeader()}
-      {children}
-      {footer && <MuiCardActions>{footer}</MuiCardActions>}
+      <Fade in={!loading}>
+        <div>
+          {children}
+        </div>
+      </Fade>
+      {loading && (
+        <MuiCardContent>
+          <Skeleton variant="rectangular" height={100} />
+        </MuiCardContent>
+      )}
+      {footer && (
+        <Fade in={!loading}>
+          <MuiCardActions>{footer}</MuiCardActions>
+        </Fade>
+      )}
     </StyledCard>
   );
+
+  if (badge) {
+    return (
+      <Badge
+        badgeContent={badge.content}
+        color={badge.color}
+        variant={badge.variant}
+        overlap={badge.overlap}
+        anchorOrigin={badge.anchorOrigin}
+      >
+        {card}
+      </Badge>
+    );
+  }
+
+  return card;
 }
 
 // Re-export Material-UI card subcomponents

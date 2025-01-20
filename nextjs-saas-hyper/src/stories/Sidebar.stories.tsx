@@ -1,144 +1,207 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Sidebar } from '../components/ui/Sidebar/Sidebar';
-import { Box, Typography } from '@mui/material';
-import { Providers } from '@/lib/Providers';
-import { useState } from 'react';
+import { Sidebar } from '@/components/ui/Sidebar/Sidebar';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 
 const meta = {
-  title: 'Components/Sidebar',
+  title: 'UI/Navigation/Sidebar',
   component: Sidebar,
   parameters: {
     layout: 'fullscreen',
+    viewport: {
+      defaultViewport: 'responsive',
+    },
+    chromatic: {
+      viewports: [320, 768, 1200],
+    },
   },
   tags: ['autodocs'],
   decorators: [
-    (Story) => (
-      <Providers>
-        <Story />
-      </Providers>
-    ),
+    (Story) => {
+      const theme = useTheme();
+      const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+      
+      return (
+        <Box 
+          sx={{ 
+            height: '100vh',
+            display: 'flex',
+            bgcolor: theme.palette.background.default
+          }}
+        >
+          <Story />
+          <Box 
+            sx={{ 
+              flex: 1,
+              p: 3,
+              bgcolor: theme.palette.background.paper,
+              borderRadius: isMobile ? 0 : 1,
+              m: isMobile ? 0 : 2,
+              boxShadow: isMobile ? 0 : 1,
+            }}
+          >
+            <h1>Main Content</h1>
+            <p>This is a sample content area to demonstrate the sidebar layout.</p>
+          </Box>
+        </Box>
+      );
+    },
   ],
 } satisfies Meta<typeof Sidebar>;
 
 export default meta;
-type Story = StoryObj<typeof Sidebar>;
+type Story = StoryObj<typeof meta>;
 
-const SidebarWrapper = ({ initialOpen = true }) => {
-  const [open, setOpen] = useState(initialOpen);
+// Função auxiliar para controlar o estado do drawer
+const SidebarWithState = ({ initialOpen = false, ...props }) => {
+  const [open, setOpen] = React.useState(initialOpen);
   return (
-    <Box sx={{ height: '100vh', display: 'flex' }}>
-      <Sidebar open={open} toggleDrawer={() => setOpen(!open)} />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          bgcolor: 'background.default',
-          marginLeft: open ? '280px' : '60px',
-          transition: 'margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms',
-        }}
-      >
-        <Typography variant="h4" gutterBottom>
-          Main Content
-        </Typography>
-        <Typography paragraph>
-          This is the main content area. It adjusts based on the sidebar state.
-        </Typography>
-      </Box>
-    </Box>
+    <Sidebar
+      open={open}
+      toggleDrawer={() => setOpen(!open)}
+      {...props}
+    />
   );
 };
 
-export const Expanded: Story = {
-  render: () => <SidebarWrapper initialOpen={true} />,
+export const Default: Story = {
+  render: () => <SidebarWithState initialOpen={true} />,
 };
 
 export const Collapsed: Story = {
-  render: () => <SidebarWrapper initialOpen={false} />,
+  render: () => <SidebarWithState initialOpen={false} />,
 };
 
-export const DarkMode: Story = {
-  render: () => <SidebarWrapper initialOpen={true} />,
+export const Mobile: Story = {
   parameters: {
-    themes: {
-      themeOverride: 'dark',
+    viewport: {
+      defaultViewport: 'iphone6',
+    },
+    chromatic: {
+      viewports: [320],
     },
   },
+  render: () => <SidebarWithState initialOpen={false} />,
 };
 
-export const WithActiveItems: Story = {
+export const Tablet: Story = {
+  parameters: {
+    viewport: {
+      defaultViewport: 'ipad',
+    },
+    chromatic: {
+      viewports: [768],
+    },
+  },
+  render: () => <SidebarWithState initialOpen={true} />,
+};
+
+// Story para demonstrar o comportamento do drawer em diferentes breakpoints
+export const ResponsiveBreakpoints: Story = {
+  parameters: {
+    viewport: {
+      viewports: {
+        xs: {
+          name: 'Extra small',
+          styles: {
+            width: '320px',
+            height: '100%',
+          },
+        },
+        sm: {
+          name: 'Small',
+          styles: {
+            width: '600px',
+            height: '100%',
+          },
+        },
+        md: {
+          name: 'Medium',
+          styles: {
+            width: '960px',
+            height: '100%',
+          },
+        },
+        lg: {
+          name: 'Large',
+          styles: {
+            width: '1280px',
+            height: '100%',
+          },
+        },
+      },
+      defaultViewport: 'md',
+    },
+  },
+  render: () => <SidebarWithState initialOpen={true} />,
+};
+
+// Story para demonstrar interações com o drawer
+export const Interactive: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Esta story demonstra as interações com o Sidebar. Você pode abrir/fechar o drawer e interagir com os menus.',
+      },
+    },
+  },
   render: () => {
-    const [open, setOpen] = useState(true);
+    const [isOpen, setIsOpen] = React.useState(true);
+    
     return (
-      <Box sx={{ height: '100vh', display: 'flex' }}>
+      <>
         <Sidebar
-          open={open}
-          toggleDrawer={() => setOpen(!open)}
+          open={isOpen}
+          toggleDrawer={() => setIsOpen(!isOpen)}
         />
         <Box
-          component="main"
           sx={{
-            flexGrow: 1,
-            p: 3,
-            bgcolor: 'background.default',
-            marginLeft: open ? '280px' : '60px',
-            transition: 'margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms',
+            position: 'fixed',
+            bottom: 16,
+            right: 16,
+            zIndex: 1300,
           }}
         >
-          <Typography variant="h4" gutterBottom>
-            Active Items Demo
-          </Typography>
-          <Typography paragraph>
-            The sidebar shows the default navigation structure.
-          </Typography>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#1976d2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            {isOpen ? 'Close Sidebar' : 'Open Sidebar'}
+          </button>
         </Box>
-      </Box>
+      </>
     );
   },
 };
 
-export const Mobile: Story = {
-  render: () => (
-    <Box sx={{ height: '100vh' }}>
-      <SidebarWrapper initialOpen={false} />
-    </Box>
-  ),
+// Story para demonstrar o tema escuro
+export const DarkMode: Story = {
   parameters: {
-    viewport: {
-      defaultViewport: 'mobile1',
+    themes: {
+      default: 'dark',
     },
   },
+  render: () => <SidebarWithState initialOpen={true} />,
 };
 
-export const WithLongContent: Story = {
+// Story para demonstrar diferentes estados de navegação
+export const WithActiveItems: Story = {
   render: () => {
-    const [open, setOpen] = useState(true);
+    const [activeItem, setActiveItem] = React.useState('dashboard');
+    
     return (
-      <Box sx={{ height: '100vh', display: 'flex' }}>
-        <Sidebar open={open} toggleDrawer={() => setOpen(!open)} />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            bgcolor: 'background.default',
-            marginLeft: open ? '280px' : '60px',
-            transition: 'margin 225ms cubic-bezier(0, 0, 0.2, 1) 0ms',
-          }}
-        >
-          <Typography variant="h4" gutterBottom>
-            Scrollable Content
-          </Typography>
-          {Array.from({ length: 20 }).map((_, index) => (
-            <Typography key={index} paragraph>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-              ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-              aliquip ex ea commodo consequat.
-            </Typography>
-          ))}
-        </Box>
-      </Box>
+      <SidebarWithState
+        initialOpen={true}
+        activeItem={activeItem}
+        onItemClick={(item) => setActiveItem(item)}
+      />
     );
   },
 };

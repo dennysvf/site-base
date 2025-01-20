@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Grid } from '@mui/material';
+import { Grid, Box } from '@mui/material';
 import { 
   AttachMoney as MoneyIcon,
   People as PeopleIcon,
@@ -19,16 +19,13 @@ const sampleChartData = [
   { name: 'Jul', value: 44 },
 ];
 
-export default function OverviewPage() {
+export default function WidgetsPage() {
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Visão Geral
-      </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} lg={3}>
           <DataCard
-            title="Receita Mensal"
+            title="Total Revenue"
             value={45890}
             icon={<MoneyIcon />}
             numberFormat={{ style: 'currency', currency: 'BRL' }}
@@ -39,7 +36,7 @@ export default function OverviewPage() {
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
           <DataCard
-            title="Usuários Ativos"
+            title="Active Users"
             value={1234}
             icon={<PeopleIcon />}
             trend={{ value: -5.2, label: 'vs last week', direction: 'down' }}
@@ -49,7 +46,7 @@ export default function OverviewPage() {
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
           <DataCard
-            title="Novos Pedidos"
+            title="Orders"
             value={89}
             icon={<CartIcon />}
             trend={{ value: 2.1, label: 'vs yesterday', direction: 'up' }}
@@ -61,7 +58,7 @@ export default function OverviewPage() {
         </Grid>
         <Grid item xs={12} sm={6} lg={3}>
           <DataCard
-            title="Crescimento"
+            title="Growth"
             value={67.5}
             icon={<ChartIcon />}
             numberFormat={{ style: 'percent', minimumFractionDigits: 1 }}
